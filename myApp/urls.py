@@ -7,6 +7,9 @@ from .views import (
     BlogUpdateView,
     BlogAllView,
     BlogUserView,
+    BlogCommentView,
+    BlogCommentAllView,
+    BlogDeleteCommentView,
 )
 
 
@@ -18,5 +21,8 @@ urlpatterns = [
     path('delete/<int:pk>/', BlogDeleteView.as_view(), name='delete'),
     path('update/<int:pk>/', BlogUpdateView.as_view(),name="update"),
     path('all/', BlogAllView.as_view(), name="all"),
-    path('userbase/', BlogUserView.as_view(), name='userbase')
+    path('allcomments/',BlogCommentAllView.as_view(), name='allcomments'),
+    path('userbase/', BlogUserView.as_view(), name='userbase'),
+    path('comment/<int:pk>/', BlogCommentView.as_view(), name='comment'),
+    path('deletecomment/<int:pk>/', BlogDeleteCommentView.as_view(), name='deletecomment')
 ]

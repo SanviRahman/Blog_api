@@ -147,10 +147,56 @@ class BlogAllView(APIView):
     
 
 #write a views logged in user base can see only his  views
-
 class BlogUserView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
         blogs = Blog.objects.filter(author=request.user)
         serializer = BlogSerializer(blogs, many=True)
         return Response(serializer.data)
+    
+
+
+#create a new views for logged in user can comment on his blog
+class BlogCommentView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, pk):
+        blog = get_object_or_404(Blog, pk=pk)
+        if blog.author == request.user:
+            serializer = BlogSerializer(blog, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(
+                {'message': 'You are not authorized to comment on this blog.'},
+                status=status.HTTP_403_FORBIDDEN,
+                )
+        
+
+
+#show all comments with user details
+class BlogCommentAllView(APIView):
+    def get(self, request):
+        comments = Blog.objects.filter(comments__isnull=False).values('author__id', 'author__username','comments')
+        return Response(comments)
+    
+
+
+#write a class to delete comments
+class BlogDeleteCommentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        # Fetch the specific blog by its primary key
+        blog = get_object_or_404(Blog, pk=pk)
+
+        # Check if the current user is the author of the blog
+        if blog.author == request.user:
+            # Clear the comments field
+            blog.comments = None
+            blog.save()
+
+            return Response({'message': 'Comment deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
