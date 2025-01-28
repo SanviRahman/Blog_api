@@ -23,6 +23,8 @@ urlpatterns = [
     path('all/', BlogAllView.as_view(), name="all"),
     path('allcomments/',BlogCommentAllView.as_view(), name='allcomments'),
     path('userbase/', BlogUserView.as_view(), name='userbase'),
+    #path('comment/<int:pk>/', BlogCommentView.as_view(), name='comment'),
     path('comment/<int:pk>/', BlogCommentView.as_view(), name='comment'),
+    # path('comment/', BlogCommentView.as_view(), name='comment'),
     path('deletecomment/<int:pk>/', BlogDeleteCommentView.as_view(), name='deletecomment')
 ]

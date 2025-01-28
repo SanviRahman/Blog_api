@@ -1,12 +1,11 @@
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserSerializer
+from .serializers import UserSerializer, BlogSerializer, CommentSerializer
 from django.contrib.auth.models import User
-from .models import Blog
+from .models import Blog, Comment
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import BlogSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.shortcuts import get_object_or_404
@@ -136,7 +135,6 @@ class BlogUpdateView(APIView):
     
 
 #write a new views for show all data read
-
 class BlogAllView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -145,6 +143,7 @@ class BlogAllView(APIView):
         serializer = BlogSerializer(blogs, many=True)
         return Response(serializer.data)
     
+
 
 #write a views logged in user base can see only his  views
 class BlogUserView(APIView):
@@ -157,22 +156,67 @@ class BlogUserView(APIView):
 
 
 #create a new views for logged in user can comment on his blog
+# class BlogCommentView(APIView):
+#     permission_classes = [IsAuthenticated]
+#     def post(self, request, pk):
+#         blog = get_object_or_404(Blog, pk=pk)
+#         if blog.author == request.user:
+#             serializer = BlogSerializer(blog, data=request.data, partial=True)
+#             if serializer.is_valid():
+#                 serializer.save()
+#                 return Response(serializer.data,status=status.HTTP_201_CREATED)
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         else:
+#             return Response(
+#                 {'message': 'You are not authorized to comment on this blog.'},
+#                 status=status.HTTP_403_FORBIDDEN,
+#                 )
+        
+
+
+#write comments view where has comments
 class BlogCommentView(APIView):
     permission_classes = [IsAuthenticated]
+    
+    # To create a new comment on the blog
     def post(self, request, pk):
         blog = get_object_or_404(Blog, pk=pk)
-        if blog.author == request.user:
-            serializer = BlogSerializer(blog, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data,status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(
-                {'message': 'You are not authorized to comment on this blog.'},
-                status=status.HTTP_403_FORBIDDEN,
-                )
         
+        # Ensure the request contains a 'comment' field in the data
+        comment_data = request.data.get('comment')
+        if not comment_data:
+            return Response({'message': 'Comment is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create a new comment for the blog
+        comment = Comment.objects.create(
+            blog=blog,
+            user=request.user,
+            comment=comment_data
+        )
+        
+        # Serialize the comment object to return it in the response
+        comment_serializer = CommentSerializer(comment)
+        return Response(comment_serializer.data, status=status.HTTP_201_CREATED)
+    
+    # To get all comments on a specific blog
+    def get(self, request, pk):
+        blog = get_object_or_404(Blog, pk=pk)
+        
+        # Get all comments for the blog
+        comments = blog.comment_set.all()  # The related_name 'comment_set' for accessing related comments
+        
+        # Serialize the comments
+        comment_serializer = CommentSerializer(comments, many=True)
+        return Response(comment_serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
 
 
 #show all comments with user details
@@ -183,7 +227,12 @@ class BlogCommentAllView(APIView):
     
 
 
-#write a class to delete comments
+
+
+
+
+
+# #write a class to delete comments
 class BlogDeleteCommentView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -196,7 +245,6 @@ class BlogDeleteCommentView(APIView):
             # Clear the comments field
             blog.comments = None
             blog.save()
-
             return Response({'message': 'Comment deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
         else:
             return Response({'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)

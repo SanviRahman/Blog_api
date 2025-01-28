@@ -9,11 +9,21 @@ class Blog(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     created_at= models.DateTimeField(auto_now_add=True)
     updated_at= models.DateTimeField(auto_now=True)
-    comments= models.TextField(max_length=600, blank=True, null=True)
+    
     
     
     def __str__(self):
         return self.title
+
+class Comment(models.Model):
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE, blank=True, null=True, related_name="comment_set")
+    comment = models.TextField(max_length=300, blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+
+
+    def __str__(self):
+        return self.comment
+
 
 
 

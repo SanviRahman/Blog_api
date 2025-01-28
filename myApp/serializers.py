@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Blog
+from .models import Blog, Comment
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -21,3 +21,15 @@ class BlogSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         blog = Blog.objects.create(**validated_data)
         return blog
+    
+
+class CommentSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'user', 'username', 'comment', 'blog')
+
+    def create(self, validated_data):
+        comment = Comment.objects.create(**validated_data)
+        return comment
