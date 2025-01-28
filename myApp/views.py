@@ -44,11 +44,6 @@ class UserLoginView(APIView):
                },
                 status=status.HTTP_200_OK)
         return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-    
-    # def get(self, request):
-    #     users = User.objects.all()
-    #     serializer = UserSerializer(users, many=True)
-    #     return Response(serializer.data)
 
 
 
@@ -83,6 +78,7 @@ class BlogCreateView(APIView):
 
 class BlogDeleteView(APIView):
     permission_classes = [IsAuthenticated]
+
     def delete(self, request, pk):
         blog = Blog.objects.get(pk=pk)
         if blog.author == request.user:
@@ -106,7 +102,6 @@ class BlogDeleteView(APIView):
 
 class BlogUpdateView(APIView):
     permission_classes = [IsAuthenticated]
-
 
     def put(self, request, pk):
         # Retrieve the blog post or return a 404 error if not found
@@ -143,9 +138,19 @@ class BlogUpdateView(APIView):
 #write a new views for show all data read
 
 class BlogAllView(APIView):
+
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         blogs = Blog.objects.all()
         serializer = BlogSerializer(blogs, many=True)
         return Response(serializer.data)
     
 
+#write a views logged in user base can see only his  views
+
+class BlogUserView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        blogs = Blog.objects.filter(author=request.user)
+        serializer = BlogSerializer(blogs, many=True)
+        return Response(serializer.data)
