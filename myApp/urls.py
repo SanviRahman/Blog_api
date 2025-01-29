@@ -1,30 +1,35 @@
 from django.urls import path
 from .views import (
-    UserRegistrationView, 
-    UserLoginView,
-    BlogCreateView,
-    BlogDeleteView,
-    BlogUpdateView,
-    BlogAllView,
-    BlogUserView,
-    BlogCommentView,
-    BlogCommentAllView,
-    BlogDeleteCommentView,
+    UserRegistration, 
+    UserLogin,
+    CreatePost,
+    DeletePost,
+    UpdatePost,
+    AllViewForPost,
+    CreatComment,
+    CommentDetails,
+    DeleteComment,
 )
 
 
 urlpatterns = [
-    path('register/', UserRegistrationView.as_view(), name='register'),
-    path('login/', UserLoginView.as_view(), name='login'),
-    path('create/', BlogCreateView.as_view(), name='create'),
-    path('create/<int:pk>/', BlogCreateView.as_view(), name='create'),
-    path('delete/<int:pk>/', BlogDeleteView.as_view(), name='delete'),
-    path('update/<int:pk>/', BlogUpdateView.as_view(),name="update"),
-    path('all/', BlogAllView.as_view(), name="all"),
-    path('allcomments/',BlogCommentAllView.as_view(), name='allcomments'),
-    path('userbase/', BlogUserView.as_view(), name='userbase'),
-    #path('comment/<int:pk>/', BlogCommentView.as_view(), name='comment'),
-    path('comment/<int:pk>/', BlogCommentView.as_view(), name='comment'),
-    # path('comment/', BlogCommentView.as_view(), name='comment'),
-    path('deletecomment/<int:pk>/', BlogDeleteCommentView.as_view(), name='deletecomment')
+    #                         For Authentications
+    path('register/', UserRegistration.as_view(), name='register'),
+    path('login/', UserLogin.as_view(), name='login'),
+
+
+    #                         For Posts
+    path('createpost/', CreatePost.as_view(), name='createpost'),
+    path('createpost/<int:pk>/', CreatePost.as_view(), name='createpost'), #for get
+    path('deletepost/<int:pk>/', DeletePost.as_view(), name='deletepost'),
+    path('updatepost/<int:pk>/', UpdatePost.as_view(),name="updatepost"),
+    path('allpost/', AllViewForPost.as_view(), name="allpost"),
+    #path('userbasepostview/', UserView.as_view(), name='userbasepostview'), 
+
+
+    #                         For Comments
+    #path('comment/<int:pk>/', CreatComment.as_view(), name='comment'),
+    path('commentdetails/<int:pk>/', CommentDetails.as_view(), name='commentdetails'),
+    path('commentdetails/',CommentDetails.as_view(), name='commentdetails'),
+    path('deletecomment/<int:pk>/', DeleteComment.as_view(), name='deletecomment')  #delete and get the comment
 ]

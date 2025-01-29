@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404
 
 
 # create a views for userRegsitrations
-class UserRegistrationView(APIView):
+class UserRegistration(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -25,7 +25,7 @@ class UserRegistrationView(APIView):
 
 
 #Create a Login Views
-class UserLoginView(APIView):
+class UserLogin(APIView):
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -46,8 +46,13 @@ class UserLoginView(APIView):
 
 
 
+
+
+
+
+ #              CRUD Operations
 #write a new view for create views
-class BlogCreateView(APIView):
+class CreatePost(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         serializer = BlogSerializer(data=request.data)
@@ -73,33 +78,8 @@ class BlogCreateView(APIView):
     
 
 
-#write a new view for delete views
-
-class BlogDeleteView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, pk):
-        blog = Blog.objects.get(pk=pk)
-        if blog.author == request.user:
-            blog.delete()
-            return Response({'message': 'Blog deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response({'message':'Blog not deleted'}, status=status.HTTP_400_BAD_REQUEST)
-        
-
-    def get(self, request,pk):
-        blog = get_object_or_404(Blog, pk=pk)
-        if blog.author == request.user:
-            serializer = BlogSerializer(blog)
-            return Response(serializer.data,status=status.HTTP_200_OK)
-        else:
-            return Response(
-                {'message': 'You are not authorized to view this blog.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-    
-
-class BlogUpdateView(APIView):
+#update views
+class UpdatePost(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, pk):
@@ -134,48 +114,71 @@ class BlogUpdateView(APIView):
             )
     
 
-#write a new views for show all data read
-class BlogAllView(APIView):
-
+#write a new view for delete views
+class DeletePost(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
-        blogs = Blog.objects.all()
-        serializer = BlogSerializer(blogs, many=True)
-        return Response(serializer.data)
-    
 
+    def delete(self, request, pk):
+        blog = Blog.objects.get(pk=pk)
+        if blog.author == request.user:
+            blog.delete()
+            return Response({'message': 'Blog deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'message':'Blog not deleted'}, status=status.HTTP_400_BAD_REQUEST)
+        
 
-#write a views logged in user base can see only his  views
-class BlogUserView(APIView):
-    permission_classes = [IsAuthenticated]
-    def get(self, request):
-        blogs = Blog.objects.filter(author=request.user)
-        serializer = BlogSerializer(blogs, many=True)
-        return Response(serializer.data)
-    
-
-
-#create a new views for logged in user can comment on his blog
-# class BlogCommentView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     def post(self, request, pk):
-#         blog = get_object_or_404(Blog, pk=pk)
-#         if blog.author == request.user:
-#             serializer = BlogSerializer(blog, data=request.data, partial=True)
-#             if serializer.is_valid():
-#                 serializer.save()
-#                 return Response(serializer.data,status=status.HTTP_201_CREATED)
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#         else:
-#             return Response(
-#                 {'message': 'You are not authorized to comment on this blog.'},
-#                 status=status.HTTP_403_FORBIDDEN,
-#                 )
+    def get(self, request,pk):
+        blog = get_object_or_404(Blog, pk=pk)
+        if blog.author == request.user:
+            serializer = BlogSerializer(blog)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {'message': 'You are not authorized to view this blog.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         
 
 
+
+
+
+
+#                AllView For Post
+#write a new views for show all data read
+class AllViewForPost(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        blogs = Blog.objects.all()
+        
+        blog_data = []
+
+        for blog in blogs:
+            # ব্লগের তথ্য সেরিয়ালাইজ করা
+            blog_serializer = BlogSerializer(blog)
+
+            # ব্লগের সাথে সংযুক্ত কমেন্টস নেয়া
+            comments = blog.comment.all()  # The related_name 'comment' for accessing related comments
+            comment_serializer = CommentSerializer(comments, many=True)
+
+            # ব্লগ এবং কমেন্টস সহ সব ডাটা একটি dictionary তে জমা করা
+            blog_data.append({
+                "post_details": blog_serializer.data,
+                "comments": comment_serializer.data
+            })
+
+        return Response(blog_data, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+ #                  comments
 #write comments view where has comments
-class BlogCommentView(APIView):
+class CreatComment(APIView):
     permission_classes = [IsAuthenticated]
     
     # To create a new comment on the blog
@@ -198,32 +201,53 @@ class BlogCommentView(APIView):
         comment_serializer = CommentSerializer(comment)
         return Response(comment_serializer.data, status=status.HTTP_201_CREATED)
     
-    # To get all comments on a specific blog
+
+
+
+
+
+#show all comments with user details and post
+class CommentDetails(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        blogs = Blog.objects.all()
+        
+        blog_data = []
+        
+        for blog in blogs:
+            # Serialize blog details (only title and description)
+            blog_serializer = BlogSerializer(blog)
+            
+            # Serialize the author's username
+            author_username = blog.author.username if blog.author else "Unknown"
+
+            # Serialize the comments
+            comments = blog.comment.all()
+            comment_serializer = CommentSerializer(comments, many=True)
+
+            # Append filtered data to the response list
+            blog_data.append({
+                "title": blog_serializer.data["title"],
+                "description": blog_serializer.data["description"],
+                "username": author_username,
+                "comments": comment_serializer.data
+            })
+
+        return Response(blog_data, status=status.HTTP_200_OK)
+    
+    #create a views for single blog
     def get(self, request, pk):
         blog = get_object_or_404(Blog, pk=pk)
-        
-        # Get all comments for the blog
-        comments = blog.comment_set.all()  # The related_name 'comment_set' for accessing related comments
-        
-        # Serialize the comments
+        serializer = BlogSerializer(blog)
+        author_username = blog.author.username if blog.author else "Unknown"
+        comments = blog.comment.all()
         comment_serializer = CommentSerializer(comments, many=True)
-        return Response(comment_serializer.data, status=status.HTTP_200_OK)
-
-
-
-
-
-
-
-
-
-
-
-#show all comments with user details
-class BlogCommentAllView(APIView):
-    def get(self, request):
-        comments = Blog.objects.filter(comments__isnull=False).values('author__id', 'author__username','comments')
-        return Response(comments)
+        return Response({
+            "title": serializer.data["title"],
+            "description": serializer.data["description"],
+            "username": author_username,
+            "comments": comment_serializer.data
+        }, status=status.HTTP_200_OK)
     
 
 
@@ -231,9 +255,8 @@ class BlogCommentAllView(APIView):
 
 
 
-
-# #write a class to delete comments
-class BlogDeleteCommentView(APIView):
+# write a class to delete comments
+class DeleteComment(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):

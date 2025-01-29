@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
 class BlogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Blog
-        fields = ('id','image', 'title', 'description', 'author', 'created_at', 'updated_at','comments')
+        fields = ('id','image', 'title', 'description', 'author', 'comment','created_at', 'updated_at',)
     
     def create(self, validated_data):
         blog = Blog.objects.create(**validated_data)
@@ -25,10 +25,12 @@ class BlogSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)  # Include email
 
     class Meta:
         model = Comment
-        fields = ('id', 'user', 'username', 'comment', 'blog')
+        fields = ('id', 'user', 'username', 'email', 'comment', 'blog')
+
 
     def create(self, validated_data):
         comment = Comment.objects.create(**validated_data)
