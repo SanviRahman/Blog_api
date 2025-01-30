@@ -150,25 +150,34 @@ class AllViewForPost(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        blogs = Blog.objects.all()
-        
+        blogs = Blog.objects.all() 
+
         blog_data = []
 
         for blog in blogs:
-            # ব্লগের তথ্য সেরিয়ালাইজ করা
+            # Fetch the author details of this blog
             blog_serializer = BlogSerializer(blog)
 
-            # ব্লগের সাথে সংযুক্ত কমেন্টস নেয়া
-            comments = blog.comment.all()  # The related_name 'comment' for accessing related comments
+            # Fetch the comments related to this blog
+            comments = blog.comment.all()  # related_name='comment' 
             comment_serializer = CommentSerializer(comments, many=True)
 
-            # ব্লগ এবং কমেন্টস সহ সব ডাটা একটি dictionary তে জমা করা
+            
             blog_data.append({
-                "post_details": blog_serializer.data,
-                "comments": comment_serializer.data
+                "post_details": {
+                    "Blog_id": blog.id,
+                    "image": blog.image.url if blog.image else None,
+                    "title": blog.title,
+                    "description": blog.description,
+                    "author": blog.author.username,
+                    "comments": comment_serializer.data,  
+                    "created_at": blog.created_at,
+                    "updated_at": blog.updated_at
+                }
             })
 
         return Response(blog_data, status=status.HTTP_200_OK)
+
 
 
 
